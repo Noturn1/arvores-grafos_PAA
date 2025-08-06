@@ -4,6 +4,11 @@
 #include <filesystem>
 #include <chrono>
 #include <sstream>
+#include <queue>
+#include <limits>
+#include <iomanip>
+#include <locale>
+#include <windows.h>
 
 using namespace std;
 
@@ -27,8 +32,10 @@ void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
 
     // Limpar a matriz antes de ler novos dados
     graph->clear();
-
+    // Pular primeira linha do .txt
     string line;
+    getline(file, line);  // Lê e descarta a primeira linha
+    // Ler o restante do arquivo e preencher a matriz
     while (getline(file, line)) {
         vector<int> row;
         stringstream ss(line);
@@ -44,51 +51,85 @@ void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
 }
 
 void dijkstra(const vector<vector<int>>& graph, int start) {
-    vector<int> dist(graph.size(), INT_MAX);
-    dist[start - 1] = 0;
+    // Verifica se o vértice de início é válido
+    if (start < 0 || start >= graph.size()) {
+        cerr << "Vertice de inicio invalido!" << endl;
+        return;
+    }
+    
+    // Vetor de distâncias, inicializado com infinito
+    vector<int> dist(graph.size(), numeric_limits<int>::max());
+    
+    // Vetor para marcar vértices visitados
     vector<bool> visited(graph.size(), false);
-    for (size_t i = 0; i < graph.size(); ++i) {
-        int u = -1;
-        int minDist = INT_MAX;
-
-        // Escolhe o vertice com a menor distância
-        for (size_t j = 0; j < graph.size(); ++j) {
-            if(!visited[j] && dist[j] < minDist) {
-                minDist = dist[j];
-                u = j;
-            }
-        }
-
-        if (u == -1) break; // Todos os vértices visitados ou inacessíveis
-
+    
+    // Fila de prioridade para escolher o vértice com menor distância
+    // pair<distância, vértice>
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    
+    // Distância do vértice inicial para ele mesmo é 0
+    dist[start] = 0;
+    pq.push({0, start});
+    
+    cout << "\nExecutando algoritmo de Dijkstra a partir do vertice " << start+1 << ":\n" << endl;
+    
+    while (!pq.empty()) {
+        // Pega o vértice com menor distância
+        int currentDist = pq.top().first;
+        int u = pq.top().second;
+        pq.pop();
+        
+        // Se já foi visitado, pula
+        if (visited[u]) continue;
+        
+        // Marca como visitado
         visited[u] = true;
-
-        // Atualiza as distâncias dos vizinhos de u
-        for(int v = 0; v < graph[u].size(); ++v) {
-            if( graph[u][v] > 0 && !visited[v] && dist[u] + graph[u][v] < dist[v]) {
-                dist[v] = dist[u] + graph[u][v];
+        
+        cout << "Visitando vertice " << u+1 << " com distancia " << currentDist << endl;
+        
+        // Relaxa todas as arestas adjacentes
+        for (int v = 0; v < graph.size(); v++) {
+            // Se existe aresta (peso > 0) e o vértice não foi visitado
+            if (graph[u][v] > 0 && !visited[v]) {
+                int newDist = dist[u] + graph[u][v];
+                
+                // Se encontrou um caminho melhor
+                if (newDist < dist[v]) {
+                    dist[v] = newDist;
+                    pq.push({newDist, v});
+                    cout << "Atualizando distancia para vertice " << v+1 << ": " << newDist << endl;
+                }
             }
         }
     }
-    // Exibe distâncias
-    cout<<"\nDistâncias minimas a partir do vértice " << start << ":\n";
-    for(int i = 0;i < graph.size(); i++) {
-        cout << "Vértice " << i + 1 << ": " << dist[i] << endl;
-        if (dist[i] == INT_MAX) {
-            cout << "Inacessível\n" << i << ": ";  
+    
+    // Imprime o resultado final
+    cout << "\nDistancias minimas a partir do vertice " << start+1 << ":" << endl;
+    cout << "Vertice\tDistancia" << endl;
+    cout << "----------------" << endl;
+    
+    for (int i = 0; i < graph.size(); i++) {
+        cout << i+1 << "\t";
+        if (dist[i] == numeric_limits<int>::max()) {
+            cout << "infinito (inalcancavel)" << endl;
         } else {
-            cout << "Acessível, distância: " << dist[i] << endl;
+            cout << dist[i] << endl;
         }
     }
 }
 
 int main() {
+    // Configurar locale e codificação para suporte a acentos no Windows
+    setlocale(LC_ALL, "Portuguese");
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    
     fs::path path = "grafos";
 
     if (fs::exists(path)) {
-        cout << "O diretório existe." << endl;
+        cout << "O diretorio existe." << endl;
     } else {
-        cout << "O diretório não existe." << endl;
+        cout << "O diretorio nao existe." << endl;
         return 1;
     }
 
@@ -97,8 +138,11 @@ int main() {
     fs::path filePath = path / "Entrada 10.txt";
 
     openNReadFile(&graph, filePath);
+    cout << "Matriz de adjacencia do grafo:" << endl;
     printGraph(graph);
-    dijkstra(graph, 2);
+    
+    // Executa o algoritmo de Dijkstra a partir do vértice 0
+    dijkstra(graph, 0);
 
     return 0;
 }
