@@ -64,14 +64,11 @@ void dijkstra(const vector<vector<int>>& graph, int start) {
     vector<bool> visited(graph.size(), false);
     
     // Fila de prioridade para escolher o vértice com menor distância
-    // pair<distância, vértice>
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
     
     // Distância do vértice inicial para ele mesmo é 0
     dist[start] = 0;
     pq.push({0, start});
-    
-    //cout << "\nExecutando algoritmo de Dijkstra a partir do vertice " << start+1 << ":\n" << endl;
     
     while (!pq.empty()) {
         // Pega o vértice com menor distância
@@ -84,8 +81,6 @@ void dijkstra(const vector<vector<int>>& graph, int start) {
         
         // Marca como visitado
         visited[u] = true;
-        
-      //  cout << "Visitando vertice " << u+1 << " com distancia " << currentDist << endl;
         
         // Relaxa todas as arestas adjacentes
         for (int v = 0; v < graph.size(); v++) {
@@ -119,30 +114,39 @@ void dijkstra(const vector<vector<int>>& graph, int start) {
 }
 
 int main(int argc, char* argv[]) {
-    // Configurar locale e codificação para suporte a acentos no Windows
+    // Configurar locale
     setlocale(LC_ALL, "Portuguese");
-    //SetConsoleOutputCP(CP_UTF8);
-    //SetConsoleCP(CP_UTF8);
     
-    fs::path path = "grafos";
-
-    if (fs::exists(path)) {
-      //  cout << "O diretorio existe." << endl;
-    } else {
-       // cout << "O diretorio nao existe." << endl;
+    if (argc < 2) {
+        cerr << "Uso: " << argv[0] << " <caminho_do_arquivo>" << endl;
         return 1;
     }
 
     vector<vector<int>> graph;
     char* arquivo = argv[1];
-    fs::path filePath = path / arquivo;
+    fs::path filePath = arquivo;
 
     openNReadFile(&graph, filePath);
-    //cout << "Matriz de adjacencia do grafo:" << endl;
-    //printGraph(graph);
     
-    // Executa o algoritmo de Dijkstra a partir do vértice 0
+    if (graph.empty()) {
+        return 1; // Encerra se o arquivo não pôde ser lido ou estava vazio
+    }
+
+    // Início da Medição de Tempo 
+    auto start_time = chrono::steady_clock::now();
+
+    // Executa o Dijkstra
     dijkstra(graph, 0);
+
+    // Fim da Medição de Tempo 
+    auto end_time = chrono::steady_clock::now();
+
+    // Calcula a duração em microssegundos
+    auto duration = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+
+    // Imprime o tempo na saída de erro padrão (stderr) para não interferir com o diff
+    cerr << "Tempo de execução (Dijkstra): " << duration.count() << " microssegundos." << endl;
 
     return 0;
 }
+
