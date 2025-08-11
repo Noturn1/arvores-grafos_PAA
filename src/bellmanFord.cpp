@@ -14,15 +14,6 @@ using namespace std;
 
 namespace fs = filesystem;
 
-void printGraph(const vector<vector<int>>& graph) {
- //   for (const auto& row : graph) {
- //       for (const auto& value : row) {
- //           cout << value << " ";
- //       }
- //       cout << endl;
- //   }
-}
-
 void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
     ifstream file(filePath);
     if (!file.is_open()) {
@@ -63,8 +54,6 @@ void bellmanFord(const vector<vector<int>>& graph, int start) {
     vector<int> dist(graph.size(), numeric_limits<int>::max());
     dist[start] = 0;  // Distância do vértice inicial para ele mesmo é 0
     
-    //cout << "\nExecutando algoritmo de Bellman-Ford a partir do vertice " << start+1 << ":\n" << endl;
-    
     // Relaxa todas as arestas |V| - 1 vezes
     for (int i = 0; i < graph.size() - 1; i++) {
         for (int u = 0; u < graph.size(); u++) {
@@ -80,10 +69,9 @@ void bellmanFord(const vector<vector<int>>& graph, int start) {
     // Verifica por ciclos negativos
     for (int u = 0; u < graph.size(); u++) {
         for (int v = 0; v < graph.size(); v++) {
-            if (graph[u][v] > 0 && dist[u] != numeric_limits<int>::max() && dist[u] + graph[u][v] < dist[v]) {
+            if (graph[u][v] != 0 && dist[u] != numeric_limits<int>::max() && dist[u] + graph[u][v] < dist[v]) {
                 cerr << "Grafo contem ciclo negativo!" << endl;
-                return;
-            }
+                return;}
         }
     }
     
@@ -104,29 +92,38 @@ void bellmanFord(const vector<vector<int>>& graph, int start) {
 
 
 int main(int argc, char* argv[]) {
-    // Configurar locale e codificação para suporte a acentos no Windows
+    // Configurar locale
     setlocale(LC_ALL, "Portuguese");
-    //SetConsoleOutputCP(CP_UTF8);
-    //SetConsoleCP(CP_UTF8);
     
-    fs::path path = "grafos";
-
-    if (fs::exists(path)) {
-     //   cout << "O diretorio existe." << endl;
-    } else {
-    //    cout << "O diretorio nao existe." << endl;
-       return 1;
+    if (argc < 2) {
+        cerr << "Uso: " << argv[0] << " <caminho_do_arquivo>" << endl;
+        return 1;
     }
 
     vector<vector<int>> graph;
     char* arquivo = argv[1];
-    fs::path filePath = path / arquivo;
+    fs::path filePath = arquivo;
 
     openNReadFile(&graph, filePath);
-   // cout << "Matriz de adjacencia do grafo:" << endl;
-  //  printGraph(graph);
+
+    if (graph.empty()) {
+        return 1; // Encerra se o arquivo não pôde ser lido ou estava vazio
+    }
     
-    // Executa o algoritmo de Dijkstra a partir do vértice 0
+    // Início da Medição de Tempo 
+    auto start_time = chrono::steady_clock::now();
+
+    // Executa o algoritmo de Bellman-Ford
     bellmanFord(graph, 0);
+
+    // Fim da Medição de Tempo 
+    auto end_time = chrono::steady_clock::now();
+
+    // Calcula a duração em microssegundos
+    auto duration = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+
+    // Imprime o tempo na saída de erro padrão (stderr) para não interferir com o diff
+    cerr << "Tempo de execução (Bellman-Ford): " << duration.count() << " microssegundos." << endl;
+
     return 0;
 }
