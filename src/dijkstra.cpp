@@ -23,11 +23,21 @@ void printGraph(const vector<vector<int>>& graph) {
     }
 }
 
-void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
+void escreve_csv(int tempo_ms, int num_vertices){
+    const char* saida_csv = "saida_dijkstra.csv";
+    FILE* f = fopen(saida_csv, "a");
+    fprintf(f, "%d,%d\n" , tempo_ms, num_vertices);
+    fclose(f);
+    f = NULL;
+}
+
+
+int openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
+    int num_linhas = 0;
     ifstream file(filePath);
     if (!file.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << filePath << endl;
-        return;
+        return -1;
     }
 
     // Limpar a matriz antes de ler novos dados
@@ -38,6 +48,7 @@ void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
     // Ler o restante do arquivo e preencher a matriz
     while (getline(file, line)) {
         vector<int> row;
+        num_linhas++;
         stringstream ss(line);
         int value;
         while (ss >> value) {
@@ -48,6 +59,7 @@ void openNReadFile(vector<vector<int>>* graph, const fs::path& filePath) {
         }
         graph->push_back(row);
     }
+    return num_linhas;
 }
 
 void dijkstra(const vector<vector<int>>& graph, int start) {
@@ -116,17 +128,18 @@ void dijkstra(const vector<vector<int>>& graph, int start) {
 int main(int argc, char* argv[]) {
     // Configurar locale
     setlocale(LC_ALL, "Portuguese");
-    
+   
     if (argc < 2) {
         cerr << "Uso: " << argv[0] << " <caminho_do_arquivo>" << endl;
         return 1;
     }
 
+    int num_linhas = 0;
     vector<vector<int>> graph;
     char* arquivo = argv[1];
     fs::path filePath = arquivo;
 
-    openNReadFile(&graph, filePath);
+    num_linhas = openNReadFile(&graph, filePath);
     
     if (graph.empty()) {
         return 1; // Encerra se o arquivo não pôde ser lido ou estava vazio
@@ -145,8 +158,9 @@ int main(int argc, char* argv[]) {
     auto duration = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
 
     // Imprime o tempo na saída de erro padrão (stderr) para não interferir com o diff
-    cerr << "Tempo de execução (Dijkstra): " << duration.count() << " microssegundos." << endl;
+   // cout << "Tempo de execução (Dijkstra): " << duration.count() << " microssegundos." << endl;
 
+    escreve_csv(duration.count(), num_linhas);
     return 0;
 }
 

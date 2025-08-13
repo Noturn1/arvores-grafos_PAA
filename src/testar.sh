@@ -16,17 +16,18 @@ fi
 # Usa 'find' para listar os arquivos no diretório de grafos.
 # O 'sort -V' garante a mesma ordenação por versão.
 find "$GRAFOS_DIR" -type f -name "Entrada*.txt" | sort -V | while IFS= read -r ARQUIVO_RELATIVO; do
-    # Converte o caminho relativo (ex: grafos/Entrada.txt) 
-    ARQUIVO_ABSOLUTO=$(realpath "$ARQUIVO_RELATIVO")
+    for i in {1..5}; do
+        # Converte o caminho relativo (ex: grafos/Entrada.txt) 
+        ARQUIVO_ABSOLUTO=$(realpath "$ARQUIVO_RELATIVO")
 
-    echo "Processando $ARQUIVO_ABSOLUTO para bellmanFord"
-    ./"$SRC_DIR"/bf "$ARQUIVO_ABSOLUTO" > saida_bf.txt
+        echo "Processando $ARQUIVO_ABSOLUTO para bellmanFord"
+        ./"$SRC_DIR"/bf "$ARQUIVO_ABSOLUTO" #> saida_bf.txt
 
-    echo "Processando $ARQUIVO_ABSOLUTO para dijkstra"
-    ./"$SRC_DIR"/dij "$ARQUIVO_ABSOLUTO" > saida_dij.txt
-
-    echo "Comparando saidas"
-    diff saida_bf.txt saida_dij.txt
+        #echo "Processando $ARQUIVO_ABSOLUTO para dijkstra"
+        #./"$SRC_DIR"/dij "$ARQUIVO_ABSOLUTO" #> saida_dij.txt
+    done
+    #echo "Comparando saidas"
+    #diff saida_bf.txt saida_dij.txt
 done
 
 echo "Todos os grafos foram processados."
